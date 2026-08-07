@@ -1,4 +1,4 @@
-# Clinical-Workflow Project Overview
+# ClinicFlow Project Overview
 
 ## Project Purpose
 ClinicFlow is a web-based clinic visit tracking application designed to help outpatient clinic staff manage and monitor patient visits.
@@ -11,7 +11,7 @@ The primary users are:
 - Physicians
 
 ## Problem Being Solved
-The clinic staff need a simple way to track patient visits, update visit information, and monitor where a patient is in the clinic workflow.
+Clinic staff need a simple way to track patient visits, update visit information, and monitor where a patient is in the clinic workflow.
 
 ## Main Features
 The application will allow users to:
