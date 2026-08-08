@@ -1,0 +1,308 @@
+<div class="container py-4">
+
+  <div class="dashboard-header d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h1 class="mb-1">ClinicFlow</h1>
+      <p class="text-muted mb-0">Clinic Visit Dashboard</p>
+    </div>
+
+    <button
+      class="btn btn-primary"
+      type="button"
+      (click)="toggleAddForm()">
+      + Add Visit
+    </button>
+  </div>
+
+  <div
+    *ngIf="successMessage"
+    class="alert alert-success">
+    {{ successMessage }}
+  </div>
+
+  <div
+    *ngIf="errorMessage"
+    class="alert alert-danger">
+    {{ errorMessage }}
+  </div>
+
+  <div *ngIf="showAddForm" class="card shadow-sm mb-4">
+    <div class="card-body">
+
+      <h5 class="card-title mb-4">Add New Visit</h5>
+
+      <div class="row">
+
+        <div class="col-md-6 mb-3">
+          <label class="form-label">Patient Identifier</label>
+          <input
+            type="text"
+            class="form-control"
+            [(ngModel)]="newVisit.PatientIdentifier"
+            name="PatientIdentifier">
+        </div>
+
+        <div class="col-md-6 mb-3">
+          <label class="form-label">Department</label>
+          <input
+            type="text"
+            class="form-control"
+            [(ngModel)]="newVisit.Department"
+            name="Department">
+        </div>
+
+        <div class="col-md-6 mb-3">
+          <label class="form-label">Provider Name</label>
+          <input
+            type="text"
+            class="form-control"
+            [(ngModel)]="newVisit.ProviderName"
+            name="ProviderName">
+        </div>
+
+        <div class="col-md-3 mb-3">
+          <label class="form-label">Visit Date</label>
+          <input
+            type="date"
+            class="form-control"
+            [(ngModel)]="newVisit.VisitDate"
+            name="VisitDate">
+        </div>
+
+        <div class="col-md-3 mb-3">
+          <label class="form-label">Arrival Time</label>
+          <input
+            type="time"
+            class="form-control"
+            [(ngModel)]="newVisit.ArrivalTime"
+            name="ArrivalTime">
+        </div>
+
+        <div class="col-md-6 mb-3">
+          <label class="form-label">Status</label>
+          <select
+            class="form-select"
+            [(ngModel)]="newVisit.Status"
+            name="Status">
+
+            <option value="Waiting">Waiting</option>
+            <option value="Roomed">Roomed</option>
+            <option value="With Provider">With Provider</option>
+            <option value="Completed">Completed</option>
+            <option value="Cancelled">Cancelled</option>
+            <option value="No-Show">No-Show</option>
+          </select>
+        </div>
+
+        <div class="col-md-12 mb-3">
+          <label class="form-label">Notes</label>
+          <textarea
+            class="form-control"
+            rows="3"
+            [(ngModel)]="newVisit.Notes"
+            name="Notes">
+          </textarea>
+        </div>
+
+      </div>
+
+      <button
+        class="btn btn-primary me-2"
+        type="button"
+        (click)="saveVisit()">
+        Save Visit
+      </button>
+
+      <button
+        class="btn btn-outline-secondary"
+        type="button"
+        (click)="toggleAddForm()">
+        Cancel
+      </button>
+
+    </div>
+  </div>
+
+  <div *ngIf="selectedVisit" class="card shadow-sm mb-4">
+    <div class="card-body">
+
+      <h5 class="card-title mb-4">Edit Visit</h5>
+
+      <div class="row">
+
+        <div class="col-md-6 mb-3">
+          <label class="form-label">Patient Identifier</label>
+          <input
+            type="text"
+            class="form-control"
+            [(ngModel)]="selectedVisit.PatientIdentifier"
+            name="editPatientIdentifier">
+        </div>
+
+        <div class="col-md-6 mb-3">
+          <label class="form-label">Department</label>
+          <input
+            type="text"
+            class="form-control"
+            [(ngModel)]="selectedVisit.Department"
+            name="editDepartment">
+        </div>
+
+        <div class="col-md-6 mb-3">
+          <label class="form-label">Provider Name</label>
+          <input
+            type="text"
+            class="form-control"
+            [(ngModel)]="selectedVisit.ProviderName"
+            name="editProviderName">
+        </div>
+
+        <div class="col-md-3 mb-3">
+          <label class="form-label">Visit Date</label>
+          <input
+            type="date"
+            class="form-control"
+            [(ngModel)]="selectedVisit.VisitDate"
+            name="editVisitDate">
+        </div>
+
+        <div class="col-md-3 mb-3">
+          <label class="form-label">Arrival Time</label>
+          <input
+            type="time"
+            class="form-control"
+            [(ngModel)]="selectedVisit.ArrivalTime"
+            name="editArrivalTime">
+        </div>
+
+        <div class="col-md-6 mb-3">
+          <label class="form-label">Status</label>
+          <select
+            class="form-select"
+            [(ngModel)]="selectedVisit.Status"
+            name="editStatus">
+
+            <option value="Waiting">Waiting</option>
+            <option value="Roomed">Roomed</option>
+            <option value="With Provider">With Provider</option>
+            <option value="Completed">Completed</option>
+            <option value="Cancelled">Cancelled</option>
+            <option value="No-Show">No-Show</option>
+          </select>
+        </div>
+
+        <div class="col-md-12 mb-3">
+          <label class="form-label">Notes</label>
+          <textarea
+            class="form-control"
+            rows="3"
+            [(ngModel)]="selectedVisit.Notes"
+            name="editNotes">
+          </textarea>
+        </div>
+
+      </div>
+
+      <button
+        class="btn btn-primary me-2"
+        type="button"
+        (click)="updateSelectedVisit()">
+        Update Visit
+      </button>
+
+      <button
+        class="btn btn-outline-secondary"
+        type="button"
+        (click)="cancelEdit()">
+        Cancel
+      </button>
+
+    </div>
+  </div>
+
+  <div class="card shadow-sm">
+    <div class="card-body">
+
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="card-title mb-0">Clinic Visits</h5>
+
+        <span class="badge text-bg-secondary">
+          {{ visits.length }} Visits
+        </span>
+      </div>
+
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+
+          <thead class="table-light">
+            <tr>
+              <th>Patient ID</th>
+              <th>Department</th>
+              <th>Provider</th>
+              <th>Date</th>
+              <th>Arrival</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            <tr *ngFor="let visit of visits">
+
+              <td>
+                <strong>{{ visit.PatientIdentifier }}</strong>
+              </td>
+
+              <td>{{ visit.Department }}</td>
+
+              <td>{{ visit.ProviderName }}</td>
+
+              <td>
+                {{ visit.VisitDate | date:'yyyy-MM-dd':'UTC' }}
+              </td>
+
+              <td>
+                {{ visit.ArrivalTime | date:'HH:mm':'UTC' }}
+              </td>
+
+              <td>
+                <span
+                  class="badge"
+                  [ngClass]="{
+                    'text-bg-warning': visit.Status === 'Waiting',
+                    'text-bg-info': visit.Status === 'Roomed',
+                    'text-bg-primary': visit.Status === 'With Provider',
+                    'text-bg-success': visit.Status === 'Completed',
+                    'text-bg-danger': visit.Status === 'Cancelled',
+                    'text-bg-secondary': visit.Status === 'No-Show'
+                  }">
+                  {{ visit.Status }}
+                </span>
+              </td>
+
+              <td class="text-nowrap">
+                <button
+                  class="btn btn-sm btn-outline-primary me-2"
+                  type="button"
+                  (click)="editVisit(visit)">
+                  Edit
+                </button>
+
+                <button
+                  class="btn btn-sm btn-outline-danger"
+                  type="button"
+                  (click)="deleteVisit(visit)">
+                  Delete
+                </button>
+              </td>
+
+            </tr>
+          </tbody>
+
+        </table>
+      </div>
+
+    </div>
+  </div>
+
+</div>
