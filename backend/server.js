@@ -24,6 +24,26 @@ const dbConfig = {
   }
 };
 
+// Convert HTML time value such as "09:30" into a JavaScript Date
+// that the mssql driver can use with sql.Time.
+function convertTimeToDate(timeValue) {
+  if (!timeValue) {
+    return null;
+  }
+
+  const [hours, minutes, seconds = '00'] = timeValue.split(':');
+
+  const time = new Date(1970, 0, 1);
+  time.setHours(
+    Number(hours),
+    Number(minutes),
+    Number(seconds),
+    0
+  );
+
+  return time;
+}
+
 // GET all visits
 app.get('/api/visits', async (req, res) => {
   try {
@@ -38,6 +58,7 @@ app.get('/api/visits', async (req, res) => {
     res.json(result.recordset);
   } catch (error) {
     console.error('Error retrieving visits:', error);
+
     res.status(500).json({
       message: 'Error retrieving visits'
     });
@@ -67,6 +88,7 @@ app.get('/api/visits/:id', async (req, res) => {
     res.json(result.recordset[0]);
   } catch (error) {
     console.error('Error retrieving visit:', error);
+
     res.status(500).json({
       message: 'Error retrieving visit'
     });
@@ -90,13 +112,41 @@ app.post('/api/visits', async (req, res) => {
 
     const result = await pool
       .request()
-      .input('PatientIdentifier', sql.NVarChar(50), PatientIdentifier)
-      .input('Department', sql.NVarChar(100), Department)
-      .input('ProviderName', sql.NVarChar(100), ProviderName)
-      .input('VisitDate', sql.Date, VisitDate)
-      .input('ArrivalTime', sql.Time, ArrivalTime)
-      .input('Status', sql.NVarChar(50), Status)
-      .input('Notes', sql.NVarChar(500), Notes || null)
+      .input(
+        'PatientIdentifier',
+        sql.NVarChar(50),
+        PatientIdentifier
+      )
+      .input(
+        'Department',
+        sql.NVarChar(100),
+        Department
+      )
+      .input(
+        'ProviderName',
+        sql.NVarChar(100),
+        ProviderName
+      )
+      .input(
+        'VisitDate',
+        sql.Date,
+        VisitDate
+      )
+      .input(
+        'ArrivalTime',
+        sql.Time,
+        convertTimeToDate(ArrivalTime)
+      )
+      .input(
+        'Status',
+        sql.NVarChar(50),
+        Status
+      )
+      .input(
+        'Notes',
+        sql.NVarChar(500),
+        Notes || null
+      )
       .query(`
         INSERT INTO Visits (
           PatientIdentifier,
@@ -122,6 +172,7 @@ app.post('/api/visits', async (req, res) => {
     res.status(201).json(result.recordset[0]);
   } catch (error) {
     console.error('Error creating visit:', error);
+
     res.status(500).json({
       message: 'Error creating visit'
     });
@@ -145,14 +196,46 @@ app.put('/api/visits/:id', async (req, res) => {
 
     const result = await pool
       .request()
-      .input('VisitID', sql.Int, req.params.id)
-      .input('PatientIdentifier', sql.NVarChar(50), PatientIdentifier)
-      .input('Department', sql.NVarChar(100), Department)
-      .input('ProviderName', sql.NVarChar(100), ProviderName)
-      .input('VisitDate', sql.Date, VisitDate)
-      .input('ArrivalTime', sql.Time, ArrivalTime)
-      .input('Status', sql.NVarChar(50), Status)
-      .input('Notes', sql.NVarChar(500), Notes || null)
+      .input(
+        'VisitID',
+        sql.Int,
+        req.params.id
+      )
+      .input(
+        'PatientIdentifier',
+        sql.NVarChar(50),
+        PatientIdentifier
+      )
+      .input(
+        'Department',
+        sql.NVarChar(100),
+        Department
+      )
+      .input(
+        'ProviderName',
+        sql.NVarChar(100),
+        ProviderName
+      )
+      .input(
+        'VisitDate',
+        sql.Date,
+        VisitDate
+      )
+      .input(
+        'ArrivalTime',
+        sql.Time,
+        convertTimeToDate(ArrivalTime)
+      )
+      .input(
+        'Status',
+        sql.NVarChar(50),
+        Status
+      )
+      .input(
+        'Notes',
+        sql.NVarChar(500),
+        Notes || null
+      )
       .query(`
         UPDATE Visits
         SET
@@ -176,6 +259,7 @@ app.put('/api/visits/:id', async (req, res) => {
     res.json(result.recordset[0]);
   } catch (error) {
     console.error('Error updating visit:', error);
+
     res.status(500).json({
       message: 'Error updating visit'
     });
@@ -189,7 +273,11 @@ app.delete('/api/visits/:id', async (req, res) => {
 
     const result = await pool
       .request()
-      .input('VisitID', sql.Int, req.params.id)
+      .input(
+        'VisitID',
+        sql.Int,
+        req.params.id
+      )
       .query(`
         DELETE FROM Visits
         OUTPUT DELETED.*
@@ -207,6 +295,7 @@ app.delete('/api/visits/:id', async (req, res) => {
     });
   } catch (error) {
     console.error('Error deleting visit:', error);
+
     res.status(500).json({
       message: 'Error deleting visit'
     });
