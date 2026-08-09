@@ -5,7 +5,12 @@ require('dotenv').config();
 
 const app = express();
 
-app.use(cors());
+app.use(cors({
+  origin: 'https://clinicflow-web-e7fee4fmb5gvawa9.centralus-01.azurewebsites.net',
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type']
+}));
+
 app.use(express.json());
 
 const dbConfig = {
@@ -44,7 +49,8 @@ app.get('/api/visits/:id', async (req, res) => {
   try {
     const pool = await sql.connect(dbConfig);
 
-    const result = await pool.request()
+    const result = await pool
+      .request()
       .input('VisitID', sql.Int, req.params.id)
       .query(`
         SELECT *
@@ -82,45 +88,17 @@ app.post('/api/visits', async (req, res) => {
 
     const pool = await sql.connect(dbConfig);
 
-    const result = await pool.request()
-      .input(
-        'PatientIdentifier',
-        sql.NVarChar(50),
-        PatientIdentifier
-      )
-      .input(
-        'Department',
-        sql.NVarChar(100),
-        Department
-      )
-      .input(
-        'ProviderName',
-        sql.NVarChar(100),
-        ProviderName
-      )
-      .input(
-        'VisitDate',
-        sql.Date,
-        VisitDate
-      )
-      .input(
-        'ArrivalTime',
-        sql.Time,
-        ArrivalTime
-      )
-      .input(
-        'Status',
-        sql.NVarChar(50),
-        Status
-      )
-      .input(
-        'Notes',
-        sql.NVarChar(500),
-        Notes || null
-      )
+    const result = await pool
+      .request()
+      .input('PatientIdentifier', sql.NVarChar(50), PatientIdentifier)
+      .input('Department', sql.NVarChar(100), Department)
+      .input('ProviderName', sql.NVarChar(100), ProviderName)
+      .input('VisitDate', sql.Date, VisitDate)
+      .input('ArrivalTime', sql.Time, ArrivalTime)
+      .input('Status', sql.NVarChar(50), Status)
+      .input('Notes', sql.NVarChar(500), Notes || null)
       .query(`
-        INSERT INTO Visits
-        (
+        INSERT INTO Visits (
           PatientIdentifier,
           Department,
           ProviderName,
@@ -130,8 +108,7 @@ app.post('/api/visits', async (req, res) => {
           Notes
         )
         OUTPUT INSERTED.*
-        VALUES
-        (
+        VALUES (
           @PatientIdentifier,
           @Department,
           @ProviderName,
@@ -166,47 +143,16 @@ app.put('/api/visits/:id', async (req, res) => {
 
     const pool = await sql.connect(dbConfig);
 
-    const result = await pool.request()
-      .input(
-        'VisitID',
-        sql.Int,
-        req.params.id
-      )
-      .input(
-        'PatientIdentifier',
-        sql.NVarChar(50),
-        PatientIdentifier
-      )
-      .input(
-        'Department',
-        sql.NVarChar(100),
-        Department
-      )
-      .input(
-        'ProviderName',
-        sql.NVarChar(100),
-        ProviderName
-      )
-      .input(
-        'VisitDate',
-        sql.Date,
-        VisitDate
-      )
-      .input(
-        'ArrivalTime',
-        sql.Time,
-        ArrivalTime
-      )
-      .input(
-        'Status',
-        sql.NVarChar(50),
-        Status
-      )
-      .input(
-        'Notes',
-        sql.NVarChar(500),
-        Notes || null
-      )
+    const result = await pool
+      .request()
+      .input('VisitID', sql.Int, req.params.id)
+      .input('PatientIdentifier', sql.NVarChar(50), PatientIdentifier)
+      .input('Department', sql.NVarChar(100), Department)
+      .input('ProviderName', sql.NVarChar(100), ProviderName)
+      .input('VisitDate', sql.Date, VisitDate)
+      .input('ArrivalTime', sql.Time, ArrivalTime)
+      .input('Status', sql.NVarChar(50), Status)
+      .input('Notes', sql.NVarChar(500), Notes || null)
       .query(`
         UPDATE Visits
         SET
@@ -241,12 +187,9 @@ app.delete('/api/visits/:id', async (req, res) => {
   try {
     const pool = await sql.connect(dbConfig);
 
-    const result = await pool.request()
-      .input(
-        'VisitID',
-        sql.Int,
-        req.params.id
-      )
+    const result = await pool
+      .request()
+      .input('VisitID', sql.Int, req.params.id)
       .query(`
         DELETE FROM Visits
         OUTPUT DELETED.*
@@ -270,8 +213,6 @@ app.delete('/api/visits/:id', async (req, res) => {
   }
 });
 
-// Azure supplies its own PORT.
-// Locally, ClinicFlow will continue using port 3000.
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
