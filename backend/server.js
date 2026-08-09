@@ -1,20 +1,13 @@
-// Load environment variables
-require("dotenv").config();
+const express = require('express');
+const cors = require('cors');
+const sql = require('mssql');
+require('dotenv').config();
 
-// Load packages
-const express = require("express");
-const sql = require("mssql");
-const cors = require("cors");
-
-// Create Express app
 const app = express();
-const PORT = 3000;
 
-// Middleware
-app.use(express.json());
 app.use(cors());
+app.use(express.json());
 
-// Azure SQL configuration
 const dbConfig = {
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
@@ -26,115 +19,57 @@ const dbConfig = {
   }
 };
 
-// Validate required visit fields
-function validateVisit(data) {
-  const requiredFields = [
-    "PatientIdentifier",
-    "Department",
-    "ProviderName",
-    "VisitDate",
-    "ArrivalTime",
-    "Status"
-  ];
-
-  for (const field of requiredFields) {
-    if (!data[field]) {
-      return `${field} is required`;
-    }
-  }
-
-  return null;
-}
-
-// Basic API test
-app.get("/", (req, res) => {
-  res.json({
-    message: "ClinicFlow API is running"
-  });
-});
-
-// Test database connection
-app.get("/api/test-db", async (req, res) => {
+// GET all visits
+app.get('/api/visits', async (req, res) => {
   try {
-    await sql.connect(dbConfig);
+    const pool = await sql.connect(dbConfig);
 
-    const result = await sql.query`
-      SELECT TOP 1 * FROM Visits
-    `;
-
-    res.json(result.recordset);
-  } catch (error) {
-    console.error(error);
-
-    res.status(500).json({
-      error: "Database connection failed"
-    });
-  }
-});
-
-// Get all visits
-app.get("/api/visits", async (req, res) => {
-  try {
-    await sql.connect(dbConfig);
-
-    const result = await sql.query`
-      SELECT * FROM Visits
+    const result = await pool.request().query(`
+      SELECT *
+      FROM Visits
       ORDER BY VisitID
-    `;
+    `);
 
     res.json(result.recordset);
   } catch (error) {
-    console.error(error);
-
+    console.error('Error retrieving visits:', error);
     res.status(500).json({
-      error: "Failed to retrieve visits"
+      message: 'Error retrieving visits'
     });
   }
 });
 
-// Get one visit by ID
-app.get("/api/visits/:id", async (req, res) => {
+// GET one visit
+app.get('/api/visits/:id', async (req, res) => {
   try {
-    await sql.connect(dbConfig);
+    const pool = await sql.connect(dbConfig);
 
-    const request = new sql.Request();
-
-    request.input("VisitID", sql.Int, req.params.id);
-
-    const result = await request.query(`
-      SELECT * FROM Visits
-      WHERE VisitID = @VisitID
-    `);
+    const result = await pool.request()
+      .input('VisitID', sql.Int, req.params.id)
+      .query(`
+        SELECT *
+        FROM Visits
+        WHERE VisitID = @VisitID
+      `);
 
     if (result.recordset.length === 0) {
       return res.status(404).json({
-        error: "Visit not found"
+        message: 'Visit not found'
       });
     }
 
     res.json(result.recordset[0]);
   } catch (error) {
-    console.error(error);
-
+    console.error('Error retrieving visit:', error);
     res.status(500).json({
-      error: "Failed to retrieve visit"
+      message: 'Error retrieving visit'
     });
   }
 });
 
-// Create a new visit
-app.post("/api/visits", async (req, res) => {
+// CREATE visit
+app.post('/api/visits', async (req, res) => {
   try {
-    const validationError = validateVisit(req.body);
-
-    if (validationError) {
-      return res.status(400).json({
-        error: validationError
-      });
-    }
-
-    await sql.connect(dbConfig);
-
     const {
       PatientIdentifier,
       Department,
@@ -145,98 +80,80 @@ app.post("/api/visits", async (req, res) => {
       Notes
     } = req.body;
 
-    const request = new sql.Request();
+    const pool = await sql.connect(dbConfig);
 
-    request.input(
-      "PatientIdentifier",
-      sql.NVarChar(50),
-      PatientIdentifier
-    );
-
-    request.input(
-      "Department",
-      sql.NVarChar(100),
-      Department
-    );
-
-    request.input(
-      "ProviderName",
-      sql.NVarChar(100),
-      ProviderName
-    );
-
-    request.input(
-      "VisitDate",
-      sql.NVarChar(20),
-      VisitDate
-    );
-
-    request.input(
-      "ArrivalTime",
-      sql.NVarChar(20),
-      ArrivalTime
-    );
-
-    request.input(
-      "Status",
-      sql.NVarChar(50),
-      Status
-    );
-
-    request.input(
-      "Notes",
-      sql.NVarChar(500),
-      Notes || null
-    );
-
-    const result = await request.query(`
-      INSERT INTO Visits
-      (
-        PatientIdentifier,
-        Department,
-        ProviderName,
-        VisitDate,
-        ArrivalTime,
-        Status,
-        Notes
+    const result = await pool.request()
+      .input(
+        'PatientIdentifier',
+        sql.NVarChar(50),
+        PatientIdentifier
       )
-      OUTPUT INSERTED.*
-      VALUES
-      (
-        @PatientIdentifier,
-        @Department,
-        @ProviderName,
-        CONVERT(date, @VisitDate),
-        CONVERT(time, @ArrivalTime),
-        @Status,
-        @Notes
+      .input(
+        'Department',
+        sql.NVarChar(100),
+        Department
       )
-    `);
+      .input(
+        'ProviderName',
+        sql.NVarChar(100),
+        ProviderName
+      )
+      .input(
+        'VisitDate',
+        sql.Date,
+        VisitDate
+      )
+      .input(
+        'ArrivalTime',
+        sql.Time,
+        ArrivalTime
+      )
+      .input(
+        'Status',
+        sql.NVarChar(50),
+        Status
+      )
+      .input(
+        'Notes',
+        sql.NVarChar(500),
+        Notes || null
+      )
+      .query(`
+        INSERT INTO Visits
+        (
+          PatientIdentifier,
+          Department,
+          ProviderName,
+          VisitDate,
+          ArrivalTime,
+          Status,
+          Notes
+        )
+        OUTPUT INSERTED.*
+        VALUES
+        (
+          @PatientIdentifier,
+          @Department,
+          @ProviderName,
+          @VisitDate,
+          @ArrivalTime,
+          @Status,
+          @Notes
+        )
+      `);
 
     res.status(201).json(result.recordset[0]);
-
   } catch (error) {
-    console.error(error);
-
+    console.error('Error creating visit:', error);
     res.status(500).json({
-      error: "Failed to create visit"
+      message: 'Error creating visit'
     });
   }
 });
 
-// Update an existing visit
-app.put("/api/visits/:id", async (req, res) => {
+// UPDATE visit
+app.put('/api/visits/:id', async (req, res) => {
   try {
-    const validationError = validateVisit(req.body);
-
-    if (validationError) {
-      return res.status(400).json({
-        error: validationError
-      });
-    }
-
-    await sql.connect(dbConfig);
-
     const {
       PatientIdentifier,
       Department,
@@ -247,119 +164,116 @@ app.put("/api/visits/:id", async (req, res) => {
       Notes
     } = req.body;
 
-    const request = new sql.Request();
+    const pool = await sql.connect(dbConfig);
 
-    request.input("VisitID", sql.Int, req.params.id);
-
-    request.input(
-      "PatientIdentifier",
-      sql.NVarChar(50),
-      PatientIdentifier
-    );
-
-    request.input(
-      "Department",
-      sql.NVarChar(100),
-      Department
-    );
-
-    request.input(
-      "ProviderName",
-      sql.NVarChar(100),
-      ProviderName
-    );
-
-    request.input(
-      "VisitDate",
-      sql.NVarChar(20),
-      VisitDate
-    );
-
-    request.input(
-      "ArrivalTime",
-      sql.NVarChar(20),
-      ArrivalTime
-    );
-
-    request.input(
-      "Status",
-      sql.NVarChar(50),
-      Status
-    );
-
-    request.input(
-      "Notes",
-      sql.NVarChar(500),
-      Notes || null
-    );
-
-    const result = await request.query(`
-      UPDATE Visits
-      SET
-        PatientIdentifier = @PatientIdentifier,
-        Department = @Department,
-        ProviderName = @ProviderName,
-        VisitDate = CONVERT(date, @VisitDate),
-        ArrivalTime = CONVERT(time, @ArrivalTime),
-        Status = @Status,
-        Notes = @Notes
-      OUTPUT INSERTED.*
-      WHERE VisitID = @VisitID
-    `);
+    const result = await pool.request()
+      .input(
+        'VisitID',
+        sql.Int,
+        req.params.id
+      )
+      .input(
+        'PatientIdentifier',
+        sql.NVarChar(50),
+        PatientIdentifier
+      )
+      .input(
+        'Department',
+        sql.NVarChar(100),
+        Department
+      )
+      .input(
+        'ProviderName',
+        sql.NVarChar(100),
+        ProviderName
+      )
+      .input(
+        'VisitDate',
+        sql.Date,
+        VisitDate
+      )
+      .input(
+        'ArrivalTime',
+        sql.Time,
+        ArrivalTime
+      )
+      .input(
+        'Status',
+        sql.NVarChar(50),
+        Status
+      )
+      .input(
+        'Notes',
+        sql.NVarChar(500),
+        Notes || null
+      )
+      .query(`
+        UPDATE Visits
+        SET
+          PatientIdentifier = @PatientIdentifier,
+          Department = @Department,
+          ProviderName = @ProviderName,
+          VisitDate = @VisitDate,
+          ArrivalTime = @ArrivalTime,
+          Status = @Status,
+          Notes = @Notes
+        OUTPUT INSERTED.*
+        WHERE VisitID = @VisitID
+      `);
 
     if (result.recordset.length === 0) {
       return res.status(404).json({
-        error: "Visit not found"
+        message: 'Visit not found'
       });
     }
 
     res.json(result.recordset[0]);
-
   } catch (error) {
-    console.error(error);
-
+    console.error('Error updating visit:', error);
     res.status(500).json({
-      error: "Failed to update visit"
+      message: 'Error updating visit'
     });
   }
 });
 
-// Delete a visit by ID
-app.delete("/api/visits/:id", async (req, res) => {
+// DELETE visit
+app.delete('/api/visits/:id', async (req, res) => {
   try {
-    await sql.connect(dbConfig);
+    const pool = await sql.connect(dbConfig);
 
-    const request = new sql.Request();
-
-    request.input("VisitID", sql.Int, req.params.id);
-
-    const result = await request.query(`
-      DELETE FROM Visits
-      OUTPUT DELETED.*
-      WHERE VisitID = @VisitID
-    `);
+    const result = await pool.request()
+      .input(
+        'VisitID',
+        sql.Int,
+        req.params.id
+      )
+      .query(`
+        DELETE FROM Visits
+        OUTPUT DELETED.*
+        WHERE VisitID = @VisitID
+      `);
 
     if (result.recordset.length === 0) {
       return res.status(404).json({
-        error: "Visit not found"
+        message: 'Visit not found'
       });
     }
 
     res.json({
-      message: "Visit deleted successfully",
-      deletedVisit: result.recordset[0]
+      message: 'Visit deleted successfully'
     });
-
   } catch (error) {
-    console.error(error);
-
+    console.error('Error deleting visit:', error);
     res.status(500).json({
-      error: "Failed to delete visit"
+      message: 'Error deleting visit'
     });
   }
 });
 
-// Start server
+// Azure supplies its own PORT.
+// Locally, ClinicFlow will continue using port 3000.
+const PORT = process.env.PORT || 3000;
+
 app.listen(PORT, () => {
   console.log(`ClinicFlow API running on port ${PORT}`);
 });
