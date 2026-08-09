@@ -8,7 +8,8 @@ import { Visit } from './visit';
 })
 export class VisitService {
 
-  private apiUrl = 'http://localhost:3000/api/visits';
+  private apiUrl =
+    'https://clinicflow-api-dtd5hkcqc7hzg0dg.centralus-01.azurewebsites.net/api/visits';
 
   constructor(private http: HttpClient) {}
 
@@ -28,7 +29,9 @@ export class VisitService {
     return this.http.put<Visit>(`${this.apiUrl}/${id}`, visit);
   }
 
-  deleteVisit(id: number): Observable<void> {
-    return this.http.delete<void>(`${this.apiUrl}/${id}`);
+  deleteVisit(id: number): Observable<{ message: string }> {
+    return this.http.delete<{ message: string }>(
+      `${this.apiUrl}/${id}`
+    );
   }
 }
